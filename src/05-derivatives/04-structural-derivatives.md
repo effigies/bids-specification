@@ -1,17 +1,21 @@
-# Structural (anatomical) derivatives
+# Anatomical (structural) derivatives
 
-## Reconstructed cortical surfaces
+## Reconstructed surfaces
 
-Reconstructed cortical surfaces should be stored as GIFTI files, and each
-hemisphere should be stored separately.
+A surface is defined by three-dimensional coordinates, or vertices, and a set of triangles,
+or triplets of indices into the coordinate array.
+
+Surfaces MUST be stored as GIFTI files, with one surface per file.
+For structures with hemispheres, the `hemi-` entity SHOULD be used to distinguish the
+surfaces corresponding to each hemisphere.
 
 Template:
 
 ```Text
 <pipeline_name>/
-    sub-<participant_label>/
+    sub-<label>/
         anat/
-            <source_keywords>_hemi-{L|R}[_space-<surfspace>][_volspace-<volspace>][_desc-<label>]_<surftype>.surf.gii
+            <source_entities>[_hemi-{L|R}][_space-<label>][_den-<label>][_desc-<label>]_<suffix>.surf.gii
 ```
 
 Example:
@@ -24,14 +28,14 @@ pipeline/
             sub-001_hemi-R_pial.surf.gii
 ```
 
-The supported surface types (`<surftype>` suffix) are:
+The supported surface types (`<suffix>`) are:
 
-| `<surftype>` | Description                                                          |
+| `<suffix>`   | Description                                                          |
 | ------------ | -------------------------------------------------------------------- |
 | wm           | The gray matter / white matter border for the cortex                 |
 | smoothwm     | The smoothed gray matter / white matter border                       |
 | pial         | The gray matter / pial matter border                                 |
-| midthickness | The midpoints between wm and pial surfaces                           |
+| midthickness | The midpoints between `wm` and `pial` surfaces                       |
 | inflated     | An inflation of the midthickness surface (useful for visualization)  |
 | vinflated    | A very-inflated midthicknesss surface (also for visualization)       |
 | sphere       | The sphere (used for registration - see transforms for nomenclature) |
