@@ -2,12 +2,14 @@
 
 ## Reconstructed surfaces
 
-A surface is defined by three-dimensional coordinates, or vertices, and a set of triangles,
+A surface is defined by three-dimensional vertex coordinates, and a set of triangles,
 or triplets of indices into the coordinate array.
+Surfaces MUST be stored as [GIFTI] surface files, with one surface per file.
 
-Surfaces MUST be stored as GIFTI files, with one surface per file.
 For structures with hemispheres, the `hemi-` entity SHOULD be used to distinguish the
-surfaces corresponding to each hemisphere.
+surface files corresponding to each hemisphere.
+For example, reconstructions of the cortical sheet are typically split into two disjoing
+surfaces.
 
 Template:
 
@@ -15,7 +17,7 @@ Template:
 <pipeline_name>/
     sub-<label>/
         anat/
-            <source_entities>[_hemi-{L|R}][_space-<label>][_den-<label>][_desc-<label>]_<suffix>.surf.gii
+            <source_entities>[_hemi-{L|R}][_den-<label>][_desc-<label>]_<suffix>.surf.gii
 ```
 
 Example:
@@ -144,3 +146,5 @@ index  name               volume-mm3  intensity-avg  intensity-std
 32     Left-Hippocampus   5349.7      75.23          2.27
 32     Right-Hippocampus  4112.1      76.98          4.01
 ```
+
+[GIFTI]: https://www.nitrc.org/frs/download.php/2871/GIFTI_Surface_Format.pdf
