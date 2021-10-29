@@ -494,7 +494,7 @@ code organization of these scripts at the moment.
 
 <!-- Link Definitions -->
 
-[bids uris]: ./02-common-principles.md#bids-uri-pointing-to-files-within-and-outside-of-bids-datasets
+[bids uris]: ./02-common-principles.md#bids-uri
 
 [object]: https://www.json.org/json-en.html
 

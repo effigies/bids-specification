@@ -388,286 +388,6 @@ In particular, if a BIDS dataset contains a `derivatives/` sub-directory,
 the contents of that directory may be a heterogeneous mix of BIDS Derivatives
 datasets and non-compliant derivatives.
 
-## BIDS URI: Pointing to files within and outside of BIDS datasets
-
-Throughout the BIDS specification there are metadata fields that contain one or more
-pointers to files
-(for example `IntendedFor`, `SpatialReference`, and `AssociatedEmptyRoom`).
-Prior to BIDS version 1.7.0, such pointers were often required to be "relative paths".
-However the specification failed to consistently describe *what* these pointers should be relative to,
-and the exact syntax to be used.
-Yet even with consistently defined "relative paths",
-this method of pointing to files becomes impractical when referring to files that
-are outside of a particular file tree (for example, on the Internet),
-or when the location of the data that is being pointed to changes.
-
-For these reasons, starting with BIDS version 1.7.0,
-using "relative paths" for all fields pointing to a separate file is [DEPRECATED][].
-For internal consistency, the use of "absolute paths" is [DEPRECATED][] as well.
-
-Instead, the following [URI][uniform-resource-indicator]
-scheme SHOULD be used to point to files within and outside of BIDS datasets,
-as elaborated below.
-
-`bids:<dataset-name>:/absolute/path/within/dataset`
-
-Here, `bids:` is the URI scheme,
-and `<dataset-name>:/absolute/path/within/dataset` is the path to the file,
-consisting of the name of a dataset (MAY be an empty string, as defined below), a colon,
-and the absolute path within that dataset that MUST start with a forward slash `/`.
-
-The location of a dataset with the name `<dataset-name>` MUST be specified in the
-[`dataset_description.json` file](./03-modality-agnostic-files.md#dataset-description)
-under the `DatasetLinks` field,
-which is an [object][] of [URIs][], as shown in the examples below.
-
-In brief,
-`dataset_description.DatasetLinks` contains mappings from strings to URIs that point to dataset locations.
-The `<dataset-name>`: `""` (that is, an empty string)
-is a reserved value that may only be used to refer to the *root of the current dataset*;
-an empty string (`""`) MUST NOT be a key in the `DatasetLinks` object.
-
-In the context of BIDS URIs,
-a dataset with a given `<dataset-name>` does not have to be a BIDS dataset,
-or a neuroimaging dataset.
-It may just as well be a (sub-)directory containing one or more arbitrary files.
-
-In the case where a derivatives dataset is nested under a raw dataset and both have a `dataset_description.json` file,
-the BIDS URIs within the nested derivatives dataset MUST be resolved with respect to `/derivatives/dataset_description.json`,
-and the BIDS URIs for the raw dataset (excluding `/derivatives`) MUST be resolved with respect to `/dataset_description.json`.
-
-However if a `derivatives/` *folder* is nested under a raw dataset and only the raw dataset has a `dataset_description.json` file,
-that `derivatives/` *folder* is not considered a BIDS dataset (see [Storage of Derivated Datasets](#storage-of-derived-datasets)),
-and all BIDS URIs MUST be resolved with respect to the `/dataset_description.json` file.
-The latter situation is then comparable to referring to data in a `sourcedata/` or `code/` folder.
-
-(Assuming that in the two above examples `/` refers to the root of the BIDS raw dataset with a nested derivatives dataset/folder.)
-
-### Refer to a file within a dataset
-
-To link for example to a derivative file that is stored in a nested `derivatives/`
-directory within a dataset:
-`bids:deriv1:/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz`
-
-```json
-{
-    "DatasetLinks": {
-        "deriv1": "file://derivatives/derivative1"
-    }
-
-}
-```
-
-Alternatively, we can also make use of the reserved `<dataset-name>`: `""` (an empty string),
-which always points to the root of the current dataset, to point to the same file using the following syntax:
-`bids::/derivatives/derivative1/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz`
-
-Thus, for this specific case there are two ways to refer to the same file:
-
-1.  `bids:deriv1:/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz`,
-    with `deriv1` being specified within `dataset_description.DatasetLinks`,
-    as shown in the example above.
-
-1.  `bids::/derivatives/derivative1/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz`,
-    with `""` (an empty string) NOT being a key in `dataset_description.DatasetLinks`,
-    because it is a reserved value that always points to the root of the current dataset.
-
-**If *all* BIDS URIs in a dataset *only* use an empty string (`""`) as a `<dataset-name>`,**
-**the `DatasetLinks` metadata MAY not be specified.**
-
-### Refer to a file outside of a dataset but on the same host
-
-It is RECOMMENDED to refer to files **within** a dataset (as described in the section above),
-or on a **remote** location (as described in the section below).
-However sometimes it may be convenient to refer to files that are outside of a given dataset but on the same host.
-BIDS URIs allow for specifying such locations,
-but such specifications are by definition not portable in that the BIDS URIs break when the host changes.
-When sharing a BIDS dataset, the dataset curator MUST make sure that all BIDS URIs are portable.
-
-To link for example to an MRI file that is stored in a
-local directory that is NOT nested in the raw BIDS directory:
-
-`bids:canonical:/single_subj_T1.nii`
-
-```json
-{
-    "DatasetLinks": {
-        "canonical": "file://../../common/matlab/spm12/canonical"
-    }
-}
-```
-
-As shown in the example above, the path to `canonical` contains the `..` syntax,
-which is a common way to refer to parent directories.
-In this way, arbitrary locations on the host can be referenced relative to the current dataset.
-
-Alternatively, one may specify an absolute location on the host using a
-forward slash directly after the `file://` URI scheme as such:
-`file:///`.
-
-On Unix-like operating systems (including MacOS) this refers to the system root.
-One may reference a dataset on some example user's Desktop as such:
-
-```json
-{
-    "DatasetLinks": {
-        "my-dataset": "file:///home/example-user/Desktop/my-dataset"
-    }
-}
-```
-
-On the Windows operating system, `file:///` (note the `/` after the `file://` URI scheme)
-refers to a "virtual" system root that does not exist in practice.
-To reference a dataset on our example user's Windows Desktop, one may use:
-
-```json
-{
-    "DatasetLinks": {
-        "my-dataset": "file:///C:/Users/example-user/Desktop/my-dataset"
-    }
-}
-```
-
-On a Windows machine, the location from this example would look like:
-`C:\Users\example-user\Desktop\my-dataset`
-
-However throughout BIDS, forward slashes `/` MUST be used as the path separator.
-Furthermore, the location `C:\` is specified in BIDS using the "virtual root"
-syntax as shown in the example: `/C:`
-
-### Refer to a remote file
-
-Dataset curators can design a BIDS URI to point to a file on remote locations
-(for example on the Internet).
-Broadly, there are two design options:
-
-1.  Make a BIDS URI machine readable, that is, resolvable by tools such as
-    [curl](https://curl.se/),
-    or [wget](https://www.gnu.org/software/wget/),
-    or by simply typing the full BIDS URI into a browser window.
-
-1.  Make a BIDS URI human readable and such that a human can obtain the referred
-    data through a few steps, but sometimes not resolvable by tools.
-
-Both options are discussed with respect to the same example below.
-
-#### Machine readable "remote" BIDS URIs
-
-If a user wants to refer to a remote file `Conte69.R.midthickness.32k_fs_LR.surf.gii`,
-they may use a BIDS URI as follows:
-
-`bids:my-location:/Conte69_Atlas/Conte69.R.midthickness.32k_fs_LR.surf.gii`
-
-```json
-{
-    "DatasetLinks": {
-        "my-location": "https://github.com/mgxd/brainplot/raw/master/brainplot"
-    }
-}
-```
-
-Combining the BIDS URI with the information from `dataset_description.DatasetLinks`
-will yield the following full BIDS URI:
-
-`https://github.com/mgxd/brainplot/raw/master/brainplot/Conte69_Atlas/Conte69.R.midthickness.32k_fs_LR.surf.gii`
-
-typing this BIDS URI into a browser window will lead you directly to the file:
-The BIDS URI is machine readable and human readable.
-
-Unfortunately, specifying BIDS URIs reliably in a machine readable way is sometimes impossible,
-because remote hosts may have a complicated, unknown, or unstable interface to provide data.
-In such cases, dataset curators MAY design BIDS URIs that are *not* machine readable,
-as detailed below.
-
-#### Human readable "remote" BIDS URIs
-
-As in the example for machine readable BIDS URIs above,
-a user wants to refer to a remote file `Conte69.R.midthickness.32k_fs_LR.surf.gii`.
-They may specify the following BIDS URI:
-
-`bids:my-location:/brainplot-master/brainplot/Conte69_Atlas/Conte69.R.midthickness.32k_fs_LR.surf.gii`
-
-```json
-{
-    "DatasetLinks": {
-        "my-location": "https://github.com/mgxd/brainplot/archive/refs/heads/master.zip"
-    }
-}
-```
-
-Combining the BIDS URI with the information from `dataset_description.DatasetLinks`
-will yield the following full BIDS URI:
-
-`https://github.com/mgxd/brainplot/archive/refs/heads/master.zip/brainplot-master/brainplot/Conte69_Atlas/Conte69.R.midthickness.32k_fs_LR.surf.gii`
-
-This BIDS URI is not machine readable.
-However, a human user can still obtain the data by:
-
-1.  Downloading the dataset `https://github.com/mgxd/brainplot/archive/refs/heads/master.zip`
-1.  Unzipping the obtained dataset
-1.  Navigating to the path relative to the obtained and unzipped dataset: `/brainplot-master/brainplot/Conte69_Atlas/Conte69.R.midthickness.32k_fs_LR.surf.gii`
-
-**Using BIDS URIs in this way should be considered a fallback option to be used only**
-**when specifying machine readable BIDS URIs is for some reason impossible.**
-
-When using remote BIDS URIs, dataset curators SHOULD make them machine readable,
-as detailed in the section above.
-
-#### Additional examples for "remote" BIDS URIs
-
-##### Referring to a DOI-based location
-
--   A dataset curator wants to point to a file `BIDS-Specification-v1.6.0.pdf`.
--   This file is stored in the following Zenodo record: [https://zenodo.org/record/4710751/](https://zenodo.org/record/4710751/)
--   This Zenodo record has an associated DOI: `doi:10.5281/zenodo.4710751`
-
-We thus may refer to the file using a BIDS URI as follows:
-
-`bids:myds:/BIDS-Specification-v1.6.0.pdf`
-
-```json
-{
-    "DatasetLinks": {
-        "myds": "doi:10.5281/zenodo.4710751"
-    }
-}
-```
-
-This BIDS URI is not machine readable,
-but it allows users to find the Zenodo record, download its associated data,
-and use the path `/BIDS-Specification-v1.6.0.pdf` to find the file.
-
-### BIDS URI usage recommendations
-
-Dataset curators can flexibly use BIDS URIs to point to files in their BIDS datasets.
-However, when it comes to publicly sharing the data,
-BIDS makes two strong RECOMMENDATIONS:
-
-1.  Whenever possible, all files that are pointed to SHOULD be included in the BIDS dataset,
-    and BIDS URI pointers should be of the "local" form (that is, `bids::/absolute_path_within_dataset`).
-
-1.  In case including the file that is pointed to is impossible,
-    that file SHOULD be made available remotely with a DOI that allows an easy download from anywhere and by anyone.
-    For example, instead of pointing to a file on some generic `http://mydatahost.com` host,
-    consider making that file available with a DOI on hosts such as [Zenodo](https://zenodo.org/),
-    the [OSF](https://osf.io/),
-    or [GIN](https://gin.g-node.org/).
-
-1.  BIDS URIs pointing to remote files SHOULD be designed such that a minimal amount of data needs to be downloaded.
-    This can be achieved by either
-    (1) making the BIDS URI machine readable so that the needed file can be obtained directly (RECOMMENDED), or
-    (2) narrowing down the dataset to be downloaded from the location detailed via `<dataset-name>` as much as possible.
-    For example,
-    location: `https://mydatahost.com/this_specific_dataset/this_specific_subset`
-    with path: `/single_subj_T1.nii`
-    is preferable to
-    location: `https://mydatahost.com/this_specific_dataset`
-    with path: `/this_specific_subset/single_subj_T1.nii`,
-    because less data needs to be downloaded for the former case.
-
-Not adhering to these recommendations results in a high likelihood that users of
-your data may not have access to the data that you are pointing to.
-
 ## The Inheritance Principle
 
 Any metadata file (such as `.json`, `.bvec` or `.tsv`) may be defined at any
@@ -946,6 +666,84 @@ Several fields are designated for DOIs, for example, `DatasetDOI` in `dataset_de
 DOI values SHOULD be fully specified URIs such as `doi:10.18112/openneuro.ds000001.v1.0.0`.
 Bare DOIs such as `10.18112/openneuro.ds000001.v1.0.0` are [DEPRECATED][].
 
+### BIDS URI
+
+To reference files in BIDS datasets, the following URI scheme may be used:
+
+```
+bids:<dataset-name>:<absolute-path>
+```
+
+The scheme component `bids` identifies a BIDS URI,
+which defines a `path` component of the form `<dataset-name>:<absolute-path>`.
+The `dataset-name` component is an identifier for a dataset,
+and the `absolute-path` component is a path, starting with a slash (`/`),
+followed by the location of a resource within the dataset.
+
+Examples:
+
+```
+bids::/sub-01/fmap/sub-01_dir-AP_epi.nii.gz
+bids:ds000001:/sub-02/anat/sub-02_T1w.nii.gz
+bids:myderivatives:/sub-03/func/sub-03_task-rest_space-MNI152_bold.nii.gz
+```
+
+#### Resolution of BIDS URIs
+
+In order to resolve a BIDS URI, the dataset name must be mapped to a dataset.
+
+The special case `""` (that is, the empty string) refers to the dataset in
+which the BIDS URI is found.
+The dataset root is the nearest parent directory that contains a valid
+`dataset_description.json`.
+
+All other dataset names MUST be specified in the `DatasetLinks` object in
+[dataset_description.json][], which maps dataset names to URIs that point
+to dataset locations.
+If the scheme is omitted from the URI, the path is relative to the dataset
+root.
+
+BIDS URIs cannot be interpreted outside a BIDS dataset,
+as they require a `dataset_description.json` file to resolve.
+
+#### Examples
+
+Consider this example `dataset_description.json`:
+
+```YAML
+{
+    ...
+    "DatasetLinks": {
+        "deriv1": "derivatives/derivative1",
+        "phantoms": "file:///data/phantoms",
+        "ds000001": "doi:10.18112/openneuro.ds000001.v1.0.0"
+    }
+}
+```
+
+Here `deriv1` refers to a BIDS Derivatives dataset contained within the current
+dataset, `phantoms` refers to a BIDS dataset of phantom data stored on the local
+filesystem, and `ds000001` refers to a dataset that must be resolved by DOI.
+
+Note that resolving `bids:phantoms:sub-phantom01/anat/sub-phantom01_T1w.nii.gz`
+is a straightforward concatenation:
+`file:///data/phantoms/sub-phantom01/anat/sub-phantom01_T1w.nii.gz`.
+However, retrieving `bids:ds000001:/sub-02/anat/sub-02_T1w.nii.gz` requires
+first resolving the DOI, identifying the retrieval method, possibly retrieving
+the entire dataset, and finally constructing a URI to the desired resource.
+
+No protocol is currently proposed to automatically resolve all possible BIDS URIs.
+
+#### Future statement
+
+BIDS URIs are parsable as standard URIs with scheme `bids` and path
+`<dataset-name>:<abspath>`.
+The authority, query and fragment components are unused.
+Future versions of BIDS may specify interpretations for these components,
+but MUST NOT change the interpretation of a previously valid BIDS URI.
+For example, a future version may specify an authority that would allow BIDS
+URIs to be resolved without reference to a local `dataset_description.json`.
+
 ## Units
 
 All units SHOULD be specified as per [International System of Units](https://en.wikipedia.org/wiki/International_System_of_Units)
@@ -1091,9 +889,7 @@ to suppress warnings or provide interpretations of your file names.
 <!-- Link Definitions -->
 
 [dataset-description]: 03-modality-agnostic-files.md#dataset-description
-
+[dataset_description.json]: 03-modality-agnostic-files.md#dataset_descriptionjson
 [derived-dataset-description]: 03-modality-agnostic-files.md#derived-dataset-and-pipeline-description
-
-[deprecated]: ./02-common-principles.md#definitions
-
-[uris]: ./02-common-principles.md#uniform-resource-indicator
+[deprecated]: #definitions
+[uris]: #uniform-resource-indicator
