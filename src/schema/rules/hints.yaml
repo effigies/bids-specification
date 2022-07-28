@@ -19,4 +19,4 @@ SuspiciouslyShortDesign:
     - suffix == "bold"
     - associations contains "events"
   checks:
-    - associations.events.onset[-1] < nifti_header.pixdim[4] * nifti_header.dim[4] / 2
+    - max(associations.events.onset) < nifti_header.pixdim[4] * nifti_header.dim[4] / 2
