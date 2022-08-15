@@ -6,7 +6,7 @@ SuspiciouslyLongDesign:
     This design is suspiciously long.
   selectors:
     - suffix == "bold"
-    - associations contains "events"
+    - associations.includes("events")
   checks:
     - max(associations.events.onset) > nifti_header.pixdim[4] * nifti_header.dim[4]
 
