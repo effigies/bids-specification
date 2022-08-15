@@ -17,6 +17,6 @@ SuspiciouslyShortDesign:
     This design is suspiciously short.
   selectors:
     - suffix == "bold"
-    - associations contains "events"
+    - associations.includes("events")
   checks:
     - max(associations.events.onset) < nifti_header.pixdim[4] * nifti_header.dim[4] / 2
