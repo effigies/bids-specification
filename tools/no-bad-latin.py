@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
-# Detect Latin abbreviations that can be difficult for screenreaders and non-native English speakers
+# Detect Latin abbreviations that can be difficult for screenreaders
+# and non-native English speakers
 #
 # This script initially adopted from The Turing Way from in October 2020.
 # doi:10.5281/zenodo.3233853
@@ -76,9 +77,9 @@ def construct_error_message(files_dict):
     """
     error_message = ["Bad latin found in the following files:\n"]
 
-    for file in files_dict.keys():
+    for file, info in files_dict.items():
         error_message.append(
-            f"{file}:\t{files_dict[file]['latin_type']}\tfound in line\t[{files_dict[file]['line']}]\n"
+            f"{file}:\t{info['latin_type']}\tfound in line\t[{info['line']}]\n"
         )
 
     return "\n".join(error_message)
