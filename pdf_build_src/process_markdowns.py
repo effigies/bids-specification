@@ -599,8 +599,8 @@ def process_macros(duplicated_src_dir_path):
                 continue
 
             filename = os.path.join(root, name)
-            with open(filename, "r") as fo:
-                contents = fo.read()
+            with open(filename, "r") as fobj:
+                contents = fobj.read()
 
             # Create a mock MkDocs Page object that has a "file" attribute,
             # which is a mock MkDocs File object with a str "src_path" attribute
@@ -639,8 +639,8 @@ def process_macros(duplicated_src_dir_path):
                 # Replace the code snippet with the function output
                 contents = contents.replace(m, new)
 
-            with open(filename, "w") as fo:
-                fo.write(contents)
+            with open(filename, "w") as fobj:
+                fobj.write(contents)
 
 
 if __name__ == '__main__':
