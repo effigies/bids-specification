@@ -473,6 +473,31 @@ Columns:
   type: array
   items:
     type: string
+ColumnDescription:
+  name: '.*'
+  display_name: Column Description
+  description: |
+    An object containing information about a column appearing in a BIDS TSV file.
+  type: object
+  recommended_fields:
+    - Description
+    - Levels
+    - Units
+    - TermURL
+  properties:
+    LongName:
+      $ref: objects.metadata.LongName
+    Description:
+      $ref: objects.metadata.Description
+      description: Free-form natural language description of the column.
+    Levels:
+      $ref: objects.metadata.Levels
+    Units:
+      $ref: objects.metadata.Units
+    TermURL:
+      $ref: objects.metadata.TermURL
+    HED:
+      $ref: objects.metadata.HED
 ContinuousHeadLocalization:
   name: ContinuousHeadLocalization
   display_name: Continuous Head Localization
