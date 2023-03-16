@@ -102,6 +102,35 @@ or combinations of data arrays.
 Unless otherwise stated, bare `.gii` extensions SHOULD NOT be used
 for GIFTI files.
 
+### CIFTI-2 Connectivity File Formats
+
+The [CIFTI-2][cifti-2] family of connectivity file formats are NIfTI-2 files with an
+XML header extension describing up to three axes in the NIfTI data array.
+The NIfTI intent code indicates the type of data indicated in the array,
+and corresponds to a sequence of axes.
+
+For example, the `NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES` indicates that
+the first axis has type `CIFTI_INDEX_TYPE_SERIES` and the second axis has
+type `CIFTI_INDEX_TYPE_BRAIN_MODELS`.
+The corresponding file extension is `.dtseries.nii`.
+
+The following tables is reproduced in part from Appendix A of the
+[CIFTI-2 Connectivity File Formats Appendices][cifti-appendix].
+
+| NIfTI Intent Code                              | Extension       |
+|------------------------------------------------|-----------------|
+| `NIFTI_INTENT_CONNECTIVITY_DENSE`              | `.dconn.nii`    |
+| `NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES`       | `.dtseries.nii` |
+| `NIFTI_INTENT_CONNECTIVITY_PARCELLATED`        | `.pconn.nii`    |
+| `NIFTI_INTENT_CONNECTIVITY_PARCELLATED_SERIES` | `.ptseries.nii` |
+| `NIFTI_INTENT_CONNECTIVITY_DENSE_TRAJECTORY`   | `.dtraj.nii`    |
+| `NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS`      | `.dscalar.nii`  |
+| `NIFTI_INTENT_CONNECTIVITY_DENSE_LABELS`       | `.dlabel.nii`   |
+| `NIFTI_INTENT_CONNECTIVITY_PARCELLATED_SCALAR` | `.pscalar.nii`  |
+
+Unless otherwise stated, bare `.nii` extensions SHOULD NOT be used
+for CIFTI-2 files.
+
 <!-- Link Definitions -->
 
 [definitions]: ../common-principles.md#definitions
@@ -111,5 +140,7 @@ for GIFTI files.
 [derived-dataset-description]: ../modality-agnostic-files.md#derived-dataset-and-pipeline-description
 
 [gifti]: https://www.nitrc.org/projects/gifti/
+[cifti-2]: https://www.nitrc.org/projects/cifti/
 
 [gifti-spec]: https://www.nitrc.org/frs/download.php/2871/GIFTI_Surface_Format.pdf
+[cifti-appendix]: https://www.nitrc.org/forum/attachment.php?attachid=342&group_id=454&forum_id=1955
