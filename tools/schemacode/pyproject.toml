@@ -159,6 +159,13 @@ select = [
 "*/__init__.py" = ["F401"]
 
 [dependency-groups]
+demo = [
+  "aiohttp>=3.13.3",
+  "jupyterlab>=4.5.4",
+  "jupyterlab-rise>=0.43.1",
+  "jupytext>=1.19.1",
+  "universal-pathlib>=0.3.9",
+]
 types = [
   "lxml>=6.0.2",
   "mypy>=1.18.2",
