@@ -22,9 +22,13 @@ import bidsschematools.schema
 schema = bst.schema.load_schema()
 ```
 
+```{code-cell} ipython3
+from pprint import pprint
+```
+
 ## Entity ordering
 
-Suppose you have a collection of entities and you want to generate a plausible filename. BIDS has a global entity ordering that must be followed.
+Suppose you have a collection of entities and you want to generate a plausible filename. BIDS has a global entity ordering that must be followed. The following ensures entities are sorted, but does not attempt to ensure that the resulting filename is valid.
 
 ```{code-cell} ipython3
 from collections import defaultdict
@@ -57,14 +61,14 @@ entities = {'task': 'nback', 'description': 'denoised', 'subject': '01'}
 
 ## Requirement levels for TSV columns
 
-The schema is used for both validation and generating specification tables.
+The schema is used for both validation and generating specification tables. In some places, the types of values depends on a simple common case and a more complex structure. For example, in tabular file rules, the columns may either be a simple string indicating requirement level, or a structure where the requirement level is accessed as `.level`:
 
 ```{code-cell} ipython3
 participants_tsv_rule = schema.rules.tabular_data.modality_agnostic.Participants
 participants_tsv_rule.columns.to_dict()
 ```
 
-To get the requirement levels:
+For cases where the rendering details are not needed, it might be desirable to simplify to just the requirement levels:
 
 ```{code-cell} ipython3
 levels = {
@@ -79,7 +83,16 @@ levels
 
 ## Find location for a piece of metadata
 
-Suppose you have a piece of metadata, and you want to determine what file it should be placed in. This requires finding all of the rules it appears in.
+If you are working on a tool to curate data into BIDS, you may have a piece of metadata and want to find where it should be stored programmatically.
+
+The information is spread across `rules.tabular_data`, which contains rules that reference columns by *id*. That *id* is a key in the `objects.columns` table, and the column header is found in `column.name`, where `column` is a value in `objects.columns`.
+
+```{code-cell} ipython3
+# Example where `id` matches `name`
+pprint(dict(schema.objects.columns.participant_id))
+# Example where `id` does not match `name`
+pprint(dict(schema.objects.columns.reference__eeg))
+```
 
 Let's create a lookup table by finding every column once, and index by `name` (the column header):
 
@@ -89,8 +102,8 @@ table_rules = {
         f'{tables}.{table_key}'
         for tables in ('rules.tabular_data', 'rules.tabular_data.derivatives')
         if tables in schema  # Consider that `derivatives` might get squashed to match raw
-        for table_key, table in schema[tables].items(level=2)
-        if 'columns' in table and column_key in table.columns
+        for table_key, table in schema[tables].items(level=2)  # Rules are nested at two levels
+        if 'columns' in table and column_key in table.columns  # Identify rules
     ]
     for column_key, column in schema.objects.columns.items()
 }
@@ -110,7 +123,7 @@ Now, this doesn't help you find the file name that the data should be stored in.
 
 ## Finding file rules that accept a set of entities
 
-There is a many-to-many mapping between files and permitted entities.
+There are many-to-many mappings between file rules and entities/suffixes/datatypes.
 
 ```{code-cell} ipython3
 entity_file_map = defaultdict(set)
@@ -133,9 +146,9 @@ extension='.nii.gz'
 from functools import reduce
 entity_matches = reduce(set.intersection, (entity_file_map[ent] for ent in entities))
 suffix_matches = suffix_file_map[suffix]
-entity_matches & suffix_matches
+best_guess = next(iter(entity_matches & suffix_matches), None)
 ```
 
 ```{code-cell} ipython3
-schema.rules.files['deriv.imaging.func_volumetric'].to_dict()
+{best_guess: schema.rules.files[best_guess].to_dict()}
 ```
